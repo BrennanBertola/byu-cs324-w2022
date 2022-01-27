@@ -1,7 +1,7 @@
 /* 
  * tsh - A tiny shell program with job control
  * 
- * <Put your name and login ID here>
+ * Brennan Bertola bbertol2
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +28,7 @@ char sbuf[MAXLINE];         /* for composing sprintf messages */
 /* Here are the functions that you will implement */
 void eval(char *cmdline);
 int builtin_cmd(char **argv);
+void addPid(int *list, int pid);
 
 /* Here are helper routines that we've provided for you */
 int parseline(const char *cmdline, char **argv); 
@@ -106,7 +107,85 @@ int main(int argc, char **argv)
 */
 void eval(char *cmdline) 
 {
+    char *argv[MAXARGS];
+    int cmds[MAXARGS] = {0};
+    int stdin_redir[MAXARGS];
+    int stdout_redir[MAXARGS];
+
+
+    parseline(cmdline, argv);
+    parseargs(argv, cmds, stdin_redir, stdout_redir);
+    builtin_cmd(argv);
+
+    int currCmd = 0;
+    int pgid = -1;
+    int pid = -1;
+    int allPids [MAXARGS] = {0};
+
+    do {
+        if(currCmd == 0) {
+            if ((pid = fork()) < 0) {
+                fprintf(stderr, "could not fork()");
+                exit(1);
+            }
+            pgid = pid;
+        }
+        else {
+            if ((pid = fork()) < 0) {
+                fprintf(stderr, "could not fork()");
+                exit(1);
+            }
+        }
+
+        //child section
+        if (pid == 0) {
+            char *newenviron[] = {NULL};
+            if (stdin_redir[currCmd] > 0) {
+                FILE *tmp = fopen(argv[stdin_redir[currCmd]], "r");
+                dup2(fileno(tmp), 0);
+                close(fileno(tmp));
+            }
+            if (stdout_redir[currCmd] > 0) {
+                FILE *tmp = fopen(argv[stdout_redir[currCmd]], "w");
+                dup2(fileno(tmp), 1);
+                close(fileno(tmp));
+            }
+
+            int startIndex = cmds[currCmd];
+            int index = 0;
+            char *exeArgs[MAXARGS];
+            while (argv[startIndex + index] != NULL) {
+                exeArgs[index] = argv[startIndex + index];
+                ++index;
+            }
+            exeArgs[index] = NULL;
+
+            execve(argv[cmds[currCmd]], exeArgs, newenviron);
+        }
+        //parent section
+        else {
+            addPid(allPids, pid);
+            setpgid(pid, pgid);
+        }
+        ++currCmd;
+    } while (cmds[currCmd] != 0);
+
+    int status;
+    int index = 0;
+    while (allPids[index] != 0) {
+        waitpid(allPids[index], &status, 0);
+        ++index;
+    }
+
     return;
+}
+
+void addPid(int *list, int pid) {
+    int i = 0;
+    while (list[i] != 0) {
+        ++i;
+    }
+    list[i] = pid;
 }
 
 /* 
@@ -233,6 +312,13 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv) 
 {
+    if (argv[0] == NULL) {
+        fprintf(stderr, "No commands\n");
+        exit(1);
+    }
+    if (strcmp(argv[0], "quit") == 0) {
+        exit(0);
+    }
     return 0;     /* not a builtin command */
 }
 
