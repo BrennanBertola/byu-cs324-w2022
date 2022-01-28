@@ -178,6 +178,11 @@ void eval(char *cmdline)
 
                     close(pipe2[0]);
                     close(pipe2[1]);
+
+		    //testing
+		    for (int i = 3; i < 50; ++i) {
+			close(i);
+		    }
                 }
                 else if (cmds[currCmd + 1] == 0) { //last command
                     dup2(pipe1[0], 0);
@@ -186,6 +191,11 @@ void eval(char *cmdline)
                     close(pipe1[1]);
                     close(pipe2[0]);
                     close(pipe2[1]);
+
+		    //testing
+                    for (int i = 3; i < 50; ++i) {
+                        close(i);
+                    }
                 }
                 else { //everything else
                     dup2(pipe1[0], 0);
@@ -195,7 +205,11 @@ void eval(char *cmdline)
                     close(pipe1[1]);
                     close(pipe2[0]);
                     close(pipe2[1]);
-                }
+
+                    for (int i = 3; i < 50; ++i) {
+                        close(i);
+                    }
+		}
             }
 
             execve(argv[cmds[currCmd]], &argv[cmds[currCmd]], newenviron);
@@ -212,7 +226,8 @@ void eval(char *cmdline)
     
     //insures all fd past stderr get closed
     int i = 3;
-    while (close(i) == 0 && i < 500) {
+    while (/*close(i) == 0 &&*/ i < 50) {
+	close(i);
         ++i;
     }
 
