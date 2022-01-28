@@ -121,9 +121,18 @@ void eval(char *cmdline)
     int pgid = -1;
     int pid = -1;
     int allPids [MAXARGS] = {0};
+    int pipe1[2] = {0, 0};
+    int pipe2[2] = {-1, -1};
 
     do {
         if(currCmd == 0) {
+            if (cmds[1] != 0) {
+                if (pipe(pipe2) == -1) {
+                    printf("pipe failed\n");
+                    exit(1);
+                }
+            }
+
             if ((pid = fork()) < 0) {
                 fprintf(stderr, "could not fork()");
                 exit(1);
@@ -131,6 +140,15 @@ void eval(char *cmdline)
             pgid = pid;
         }
         else {
+            for (int i = 0; i < 2; ++i) {
+                pipe1[i] = pipe2[i];
+            }
+
+            if (pipe(pipe2) == -1) {
+                fprintf(stderr, "pipe failed\n");
+                exit(1);
+            };
+
             if ((pid = fork()) < 0) {
                 fprintf(stderr, "could not fork()");
                 exit(1);
@@ -139,40 +157,70 @@ void eval(char *cmdline)
 
         //child section
         if (pid == 0) {
+
             char *newenviron[] = {NULL};
             if (stdin_redir[currCmd] > 0) {
                 FILE *tmp = fopen(argv[stdin_redir[currCmd]], "r");
+
                 dup2(fileno(tmp), 0);
                 close(fileno(tmp));
             }
             if (stdout_redir[currCmd] > 0) {
                 FILE *tmp = fopen(argv[stdout_redir[currCmd]], "w");
+
                 dup2(fileno(tmp), 1);
                 close(fileno(tmp));
             }
 
-            int startIndex = cmds[currCmd];
-            int index = 0;
-            char *exeArgs[MAXARGS];
-            while (argv[startIndex + index] != NULL) {
-                exeArgs[index] = argv[startIndex + index];
-                ++index;
-            }
-            exeArgs[index] = NULL;
+            if (cmds[1] != 0) {
+                if (currCmd == 0) { //first command
+                    dup2(pipe2[1], 1);
 
-            execve(argv[cmds[currCmd]], exeArgs, newenviron);
+                    close(pipe2[0]);
+                    close(pipe2[1]);
+                }
+                else if (cmds[currCmd + 1] == 0) { //last command
+                    dup2(pipe1[0], 0);
+
+                    close(pipe1[0]);
+                    close(pipe1[1]);
+                    close(pipe2[0]);
+                    close(pipe2[1]);
+                }
+                else { //everything else
+                    dup2(pipe1[0], 0);
+                    dup2(pipe2[1], 1);
+
+                    close(pipe1[0]);
+                    close(pipe1[1]);
+                    close(pipe2[0]);
+                    close(pipe2[1]);
+                }
+            }
+
+            execve(argv[cmds[currCmd]], &argv[cmds[currCmd]], newenviron);
         }
         //parent section
         else {
+            // fprintf(stderr, "command: %s, pid: %d\n", argv[cmds[currCmd]], pid);
+            // fflush(stderr);
             addPid(allPids, pid);
             setpgid(pid, pgid);
         }
         ++currCmd;
     } while (cmds[currCmd] != 0);
+    
+    //insures all fd past stderr get closed
+    int i = 3;
+    while (close(i) == 0 && i < 500) {
+        ++i;
+    }
 
     int status;
     int index = 0;
     while (allPids[index] != 0) {
+        // fprintf(stderr, "wait %d\n", allPids[index]);
+        // fflush(stderr);
         waitpid(allPids[index], &status, 0);
         ++index;
     }
