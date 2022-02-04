@@ -132,7 +132,7 @@ command:
  - `/bin/sleep 10 &` - the command entered on the command line, including the
    `&` operator.
 
-If enter `jobs` at the prompt while `/bin/sleep 10` is still running in the
+If you enter `jobs` at the prompt while `/bin/sleep 10` is still running in the
 background, you will see a list of all the currently stopped and
 _backgrounded_ jobs, noting that there is, at the moment, only one:
 
@@ -206,8 +206,8 @@ In this case:
 
 ### Non-Existent Commands
 
-The shell is no dummy.  If you pass it a command is neither the valid path of
-an executable nor a built-in command, it will complain!
+The shell is no dummy.  If you pass it a command that is neither the valid path
+of an executable nor a built-in command, it will complain!
 
 ```bash
 tsh> /does/not/exist
@@ -241,7 +241,7 @@ So far we have simply _started_ commands in either the foreground or the
 background and let them run to completion.  But this shell can also change the
 state of a job, _after_ it has started running.  A few examples follow.
 
-To change the state of a foreground job to _stopped, _press `ctrl`+`z`:
+To change the state of a foreground job to _stopped_, press `ctrl`+`z`:
 
 ```bash
 tsh> /bin/sleep 20
@@ -585,8 +585,23 @@ The following functions are used for
 
 _This is where you start coding!_
 
+Before you begin, _comment out_ the following line of code:
+
+```c
+    Signal(SIGINT,  sigint_handler);   /* ctrl-c */
+```
+
+As you are working on the first parts the lab, there will be times when it will
+be desirable for you to interrupt your running shell, i.e., with `ctrl`+`c`.
+Because the function `sigint_handler()` is currently empty, using it as the
+handler for `SIGINT` will have the behavior of `SIGINT` being ignored.  This
+might be confusing to you and can also be cumbersome to work around.
+Commenting out the above line of code will therefore make development easier.
+You will un-comment the line when you get the appropriate point in the lab.
+
 Flesh out the following functions in `tsh.c` to create a shell that supports
 command execution, signal handling, and job control.
+
 
 ## `builtin_cmd()`
 
@@ -787,6 +802,13 @@ void sigint_handler(int sig)
 
 Then do something similar for `sigtstp_handler()`.
 
+Now _un-comment_ the line of code that installs the handler for `SIGINT` (i.e.,
+the one you commented out before you began coding).:
+
+```c
+    Signal(SIGINT,  sigint_handler);   /* ctrl-c */
+```
+
 Now call `make` to compile `tsh.c`, then start the shell with the `-v` option.
 Then repeat the commands from the [Changing Job State](#changing-job-state) or 
 [Interrupting Jobs](#interrupting-jobs) sections that include the `ctrl`+`c` or
@@ -797,6 +819,7 @@ print statement when they are entered.
 Now add the appropriate code for `sigint_handler()` and `sigtstp_handler()`,
 such that the signal received is sent by the shell to the process group of the
 foreground job, if any.
+
 
 ## Checkpoint 3
 

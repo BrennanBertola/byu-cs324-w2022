@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+//#include <sys/wait.h>
 #include <errno.h>
 
 /* Misc manifest constants */
