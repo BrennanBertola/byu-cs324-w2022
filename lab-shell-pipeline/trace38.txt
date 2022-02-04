@@ -1,4 +1,4 @@
-#
+c#
 # trace38.txt - Pipeline with more than two commands
 #
 /bin/echo -e tsh> ./myppid \0174 /bin/cat \0174 /bin/grep [0-9]
