@@ -11,12 +11,16 @@
 int foo;
 int block;
 
+//prints 1 followed by a 2 4 seconds later (SIGHUP, SIGINT)
+// 4 sec
 void sig_handler1(int signum) {
 	printf("1\n"); fflush(stdout);
 	sleep(4);
 	printf("2\n"); fflush(stdout);
 }
 
+//prints 8 followed by SIGINT followed by a 9 4 seconds later (SIGQUIT)
+// 8 sec
 void sig_handler2(int signum) {
 	printf("8\n"); fflush(stdout);
 	kill(getpid(), SIGINT);
@@ -24,16 +28,22 @@ void sig_handler2(int signum) {
 	printf("9\n"); fflush(stdout);
 }
 
+//prints the value of foo (SIGTERM)
+// 0 sec
 void sig_handler3(int signum) {
 	printf("%d\n", foo); fflush(stdout);
 }
 
+//if foo is postive, sets foo = 6 (30)
+// 0 sec
 void sig_handler4(int signum) {
 	if (foo > 0) {
 		foo = 6;
 	}
 }
 
+//forks setting foo equal to the result of the fork, exits if child function (10)
+// 0 sec
 void sig_handler5(int signum) {
 	foo = fork();
 	if (foo == 0) {
@@ -41,6 +51,8 @@ void sig_handler5(int signum) {
 	}
 }
 
+// (16)
+//
 void sig_handler6(int signum) {
 	int pid, status;
 	pid = waitpid(-1, &status, WNOHANG);
@@ -49,6 +61,8 @@ void sig_handler6(int signum) {
 	}
 }
 
+// (31)
+//
 void sig_handler7(int signum) {
 	if (block) {
 		block = 0;
@@ -57,6 +71,8 @@ void sig_handler7(int signum) {
 	}
 }
 
+// overwrites SIGTERM to essentially stop the program (12)
+// 0 sec
 void sig_handler8(int signum) {
 	struct sigaction sigact;
 
@@ -65,6 +81,8 @@ void sig_handler8(int signum) {
 	sigaction(SIGTERM, &sigact, NULL);
 }
 
+// (SIGCHLD)
+//
 void sig_handler9(int signum) {
 	int status;
 	waitpid(-1, &status, 0);

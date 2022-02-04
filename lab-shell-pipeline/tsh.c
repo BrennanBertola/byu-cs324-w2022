@@ -218,6 +218,11 @@ void eval(char *cmdline)
         else {
             // fprintf(stderr, "command: %s, pid: %d\n", argv[cmds[currCmd]], pid);
             // fflush(stderr);
+
+	    for(int i = 0; i < 50; ++i) {
+		close(i);
+	    }
+
             addPid(allPids, pid);
             setpgid(pid, pgid);
         }
