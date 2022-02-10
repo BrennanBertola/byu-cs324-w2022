@@ -39,14 +39,17 @@ walk-through usage of the reference shell.  You will begin coding in the
 ## Reading
 
 Read the following in preparation for this assignment:
-  - Sections 8.2 - 8.4 and 10.8 - 10.10 in the book
+  - Sections 8.2 - 8.5
   - The man pages for the following system calls:
     - `fork()`
-    - `signal()`
+    - `signal`
+    - `sigaction()`
+    - `sigprocmask()`
     - `waitpid()`
     - `exec`
     - `execve()`
     - `setpgid()`
+    - `kill()`
 
 
 ## Resources Provided
@@ -547,7 +550,10 @@ Several functions have been written to help you parse the command line.
 
 `parseline()` finds all the words (i.e., non-whitespace characters separated by
 whitespace) on the command line and puts them into an array of strings which
-is passed in as an argument: `char **argv` (i.e., an array of `char *`).
+is passed in as an argument: `char **argv` (i.e., an array of `char *`).  It
+returns true if the last word on the command line is the background operator,
+`&`; false otherwise.  Thus, you can use the return value to determine whether
+or not the job should start out in the background or foreground, respectively.
 
 For example, suppose the following command line is provided to your shell:
 
@@ -566,10 +572,30 @@ argv[2] = NULL;
 (A `NULL` value at index 2 indicates that that there are no more words, so your
 code can detect that programmatically.)
 
+In this case, `parseline()` will return `0` (false).  However, if the command
+line had been the following:
+
+```bash
+$ /bin/cat test.txt &
+```
+
+Then `argv` would contain the following after calling `parseline()`:
+
+```c
+argv[0] = "/bin/cat";
+argv[1] = "test.txt";
+argv[2] = "&";
+argv[3] = NULL;
+```
+
+In this case, `parseline()` would return `1` (true).
+
 
 #### Job Handling Functions
 
-The following functions are used for 
+The following functions are used for manipulating the global array of job
+structures (`struct job_t`), `jobs`:
+
  - `clearjob()` - clears the entries in a job struct
  - `maxjid()` - returns the largest allocated job ID
  - `addjob()` - adds a job to the job list
@@ -630,8 +656,8 @@ indicator that the command passed in was _not_ a built-in command.
 
 Parse the command line using `parseline()`.  Call `builtin_cmd()` to see if the
 command line corresponds to a built-in command.  Otherwise, do the following:
- - Fork a child process.
  - Block `SIGCHLD`, `SIGINT`, and `SIGTSTP` signals.
+ - Fork a child process.
  - In the child process:
    - Unblock signals by restoring the mask.
    - Run the executable in the context of the child process using `execve()`.
