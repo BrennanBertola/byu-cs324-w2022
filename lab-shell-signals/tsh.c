@@ -446,13 +446,13 @@ void do_bgfg(char **argv)
 
         if (strcmp(argv[0], "fg") == 0) {
             job->state = FG;
-            kill(job->pgid, SIGCONT);
+            killpg(job->pgid, SIGCONT);
             waitfg(job->pid);
         }
         else {
             job->state = BG;
             fprintf(stdout, "[%d] (%d) %s", job->jid, job->pid, job->cmdline);
-            kill(job->pgid, SIGCONT);
+            killpg(job->pgid, SIGCONT);
         }
     }
     else {
@@ -528,7 +528,7 @@ void sigint_handler(int sig)
 
     pid_t pgid = fgpid(jobs);
     if (pgid != 0) {
-        kill(pgid, SIGINT);
+        killpg(pgid, SIGINT);
     }
 
     return;
@@ -547,7 +547,7 @@ void sigtstp_handler(int sig)
 
     pid_t pgid = fgpid(jobs);
     if (pgid != 0) {
-        kill(pgid, SIGTSTP);
+        killpg(pgid, SIGTSTP);
     }
     return;
 }
