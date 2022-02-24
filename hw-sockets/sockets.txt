@@ -1,0 +1,59 @@
+1. socket() and connect()
+2. calling connect() sets the default destination address, if this was not used then you would need to specify the destination address as an argument when using sendto() and sendmsg()
+3. The remaining command-line arguments
+4. they are all the same
+5. the port for messages sent in the some run of the client are all the same but differ when running the same command multiple times. The port number changes with each run of client.
+6. they all interact with the same socket
+7. 3 foo bar abc123
+8. 2 additional for a total of 3
+9. 3
+10. I believe it is because recieve operations can return only one packet so it must go through one packet at a time
+11. The orginal listen socket is refered to as a passive socket that will be used to accept incoming connection requests, the new socket returned by accped is a connected stocket that is not in a listening state.
+12. when using udp the connect call connects to the socket and the addr value passed in is the default destinantion to send and the only addres to recived datagrams. while when doing it with tcp all it does is try to make connection with the socket.
+13. Although no messages have been sent, the sockets have already been connected via the connect() and accept() calls
+14. the port number for all messaged sent by a single ./client call are the same.
+15. the two are different but only by an increase of 2.
+16. the server is able to accept multiple sockets now through the use of the accept command, which returns a new socket fd after accepting an incoming connection
+17. 3 calls were made foo bar abc123
+18. assuming you mean recv() not recvfrom() 2 additional messages were recived before the second call although I don't think it even called it a second time
+19. 1
+20. I believe it has something to do the fact that it does not preserver record boundaries
+21. 0ef39a3f241cdd6552ad131e01afa9171b3dab8d 
+22. ./client -4 www-notls.imall.byu.edu 80 < http-bestill.txt > bestill.txt
+23. cat bestill.txt
+HTTP/1.1 200 OK
+Date: Thu, 24 Feb 2022 06:00:16 GMT
+Server: Apache/2.4.51 (Debian)
+Upgrade: h2c
+Connection: Upgrade, close
+Content-length: 809
+Vary: Accept-Encoding
+Content-Type: text/plain
+
+
+1. Be still, my soul: The Lord is on thy side;
+With patience bear thy cross of grief or pain.
+Leave to thy God to order and provide;
+In ev'ry change he faithful will remain.
+Be still, my soul: Thy best, thy heav'nly Friend
+Thru thorny ways leads to a joyful end.
+
+2. Be still, my soul: Thy God doth undertake
+To guide the future as he has the past.
+Thy hope, thy confidence let nothing shake;
+All now mysterious shall be bright at last.
+Be still, my soul: The waves and winds still know
+His voice who ruled them while he dwelt below.
+
+3. Be still, my soul: The hour is hast'ning on
+When we shall be forever with the Lord,
+When disappointment, grief, and fear are gone,
+Sorrow forgot, love's purest joys restored.
+Be still, my soul: When change and tears are past,
+All safe and blessed we shall meet at last.
+24. ./client -4 www-notls.imaal.byu.edu 80 < http-socket.txt | ./strip_http.py > socket.jpg
+25. da39a3ee5e6b4b0d3255bfef95601890afd80709 
+26. under normal circumstances if there are no messages available the recive call will wait for a message to arrive
+27. it will return any data available rather than waiting for the full amount requested
+28. the packet is truncated
+
