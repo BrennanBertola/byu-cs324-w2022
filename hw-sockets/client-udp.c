@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = af;    /* Allow IPv4, IPv6, or both, depending on
 				    what was specified on the command line. */
-	hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 	hints.ai_flags = 0;
 	hints.ai_protocol = 0;  /* Any protocol */
 
@@ -88,53 +88,9 @@ int main(int argc, char *argv[]) {
 	/* Send remaining command-line arguments as separate
 	   datagrams, and read responses from server */
 
-	char buffer [4096];
-	int byteRead = 0;
-	while(byteRead <= 4096) {
-		int tmp = fread(&buffer[byteRead], sizeof(char), 512, stdin);
-		if (tmp == 0) {
-			break;
-		}
-		byteRead += tmp;
-		if(tmp < 512) {
-			break;
-		}
-//		break;
-	}
-
-	int byteWritten = 0;
-	while (byteWritten < byteRead) {
-		int size = byteRead - byteWritten;
-		if (size > 512) {
-			size = 512;
-		}
-
-		int tmp = write(sfd, &buffer[byteWritten], size);
-		byteWritten += tmp;
-		if (tmp < 512) {
-			break;
-		}
-	}
-
-	char readBuf [16384];
-	byteRead = 0;
-	for(;;) {
-		int tmp = read(sfd, &readBuf[byteRead], 512);
-		if (tmp == 0) {
-			break;
-		}
-		byteRead += tmp;
-		if (byteRead > 16384) {
-			byteRead = 16384;
-			break;
-		}
-	}
-
-	fwrite(readBuf, sizeof(char), byteRead, stdout);
-/*
 	for (j = hostindex + 2; j < argc; j++) {
 		len = strlen(argv[j]) + 1;
-//		 +1 for terminating null byte
+		/* +1 for terminating null byte */
 
 		if (len + 1 > BUF_SIZE) {
 			fprintf(stderr,
@@ -147,15 +103,15 @@ int main(int argc, char *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 
-		nread = read(sfd, buf, BUF_SIZE);
+/*		nread = read(sfd, buf, BUF_SIZE);
 		if (nread == -1) {
 			perror("read");
 			exit(EXIT_FAILURE);
 		}
 
 		printf("Received %zd bytes: %s\n", nread, buf);
-
-	}
 */
+	}
+
 	exit(EXIT_SUCCESS);
 }

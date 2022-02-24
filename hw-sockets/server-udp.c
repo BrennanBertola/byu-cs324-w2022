@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 	   or IPv6) is being used, so we specify AF_INET or AF_INET6 explicitly
 	   in hints, depending on what is passed on on the command line. */
 	hints.ai_family = af;	/* Choose IPv4 or IPv6 */
-	hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
 	hints.ai_flags = AI_PASSIVE;	/* For wildcard IP address */
 	hints.ai_protocol = 0;		  /* Any protocol */
 	hints.ai_canonname = NULL;
@@ -88,19 +88,13 @@ int main(int argc, char *argv[]) {
 
 	/* Read datagrams and echo them back to sender */
 
-	listen(sfd, 100);
-	for(;;) {
-        peer_addr_len = sizeof(struct sockaddr_storage);
-	int nsfd = accept(sfd, (struct sockaddr *) &peer_addr, &peer_addr_len);
 	for (;;) {
-                peer_addr_len = sizeof(struct sockaddr_storage);  
-		nread = recv(nsfd, buf, BUF_SIZE, 0);
+		peer_addr_len = sizeof(struct sockaddr_storage);
+
+		nread = recvfrom(sfd, buf, BUF_SIZE, 0,
+				(struct sockaddr *) &peer_addr, &peer_addr_len);
 		sleep(2);
 
-		if (nread == 0) {
-			close(nsfd);
-			break;
-		}
 		if (nread == -1)
 			continue;   /* Ignore failed request */
 
@@ -109,15 +103,16 @@ int main(int argc, char *argv[]) {
 		s = getnameinfo((struct sockaddr *) &peer_addr,
 						peer_addr_len, host, NI_MAXHOST,
 						service, NI_MAXSERV, NI_NUMERICSERV | NI_NUMERICHOST);
-
+	
 		if (s == 0)
 			printf("Received %zd bytes from %s:%s\n",
 					nread, host, service);
 		else
 			fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
 
-		if (send(nsfd, buf, nread, 0) != nread)
+		if (sendto(sfd, buf, nread, 0,
+					(struct sockaddr *) &peer_addr,
+					peer_addr_len) != nread)
 			fprintf(stderr, "Error sending response\n");
-	}
 	}
 }
