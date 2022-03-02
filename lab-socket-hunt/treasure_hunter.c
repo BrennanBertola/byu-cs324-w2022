@@ -98,7 +98,30 @@ int main(int argc, char *argv[]) {
 		}
 		if (chunkSize > 127) {
 			fprintf(stderr, "error: %d\n", inbound[0]);
-			break;
+			exit(1);
+		}
+
+		int opCode = inbound[chunkSize + 1];
+		if (opCode == 1) {
+			unsigned short port;
+			memcpy(&port, &inbound[chunkSize + 2], 2);
+			port = ntohs(port);
+
+			char * portString = malloc(24);
+			snprintf(portString, 24, "%u", port);
+			
+			s = getaddrinfo(argv[SERVER], portString, &hints, &result);
+			if (s != 0) {
+				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+				exit(1);
+			}
+
+			for (rp = result; rp != NULL; rp = rp->ai_next) {
+				if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1) {
+					break;  // Success
+				}
+			}
+			//exit(1);
 		}
 
 		unsigned int nonce;
@@ -112,13 +135,14 @@ int main(int argc, char *argv[]) {
 		nread = read(sfd, &inbound, INBOUND);
 
 		if (nread == -1) {
-			fprintf(stderr, "read");
+			fprintf(stderr, "read\n");
 			exit(1);
 		}
 
 		chunkSize = inbound[0];
 		memcpy(&treasure[treasureIndex], &inbound[1], chunkSize);
 		treasureIndex += chunkSize;
+
 	}
 	treasure[treasureIndex] = '\0';
 	printf("%s\n", treasure);
