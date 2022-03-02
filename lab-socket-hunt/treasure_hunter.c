@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 	struct addrinfo *result, *rp;
 	int sfd, s;
 	int af = AF_INET;
-	//size_t len;
+	int chunkSize = 0;
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = af;
@@ -88,14 +88,15 @@ int main(int argc, char *argv[]) {
 		exit(1);
 	}
 
-	memcpy(&treasure[treasureIndex], &inbound[1], inbound[0]);
-	treasureIndex += inbound[0];
-	
+	chunkSize = inbound[0];
+	memcpy(&treasure[treasureIndex], &inbound[1], chunkSize);
+	treasureIndex += chunkSize;
+
 	for(;;) {
-		if (inbound[0] == 0) {
+		if (chunkSize == 0) {
 			break;
 		}
-		if (inbound[0] > 127) {
+		if (chunkSize > 127) {
 			fprintf(stderr, "error: %d\n", inbound[0]);
 			break;
 		}
@@ -115,8 +116,9 @@ int main(int argc, char *argv[]) {
 			exit(1);
 		}
 
-		memcpy(&treasure[treasureIndex], &inbound[1], inbound[0]);
-		treasureIndex += inbound[0];
+		chunkSize = inbound[0];
+		memcpy(&treasure[treasureIndex], &inbound[1], chunkSize);
+		treasureIndex += chunkSize;
 	}
 	treasure[treasureIndex] = '\0';
 	printf("%s\n", treasure);
