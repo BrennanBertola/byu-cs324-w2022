@@ -92,7 +92,12 @@ int main(int argc, char *argv[]) {
 	memcpy(&treasure[treasureIndex], &inbound[1], chunkSize);
 	treasureIndex += chunkSize;
 
+	unsigned short port = 1;
+	char * portString = malloc(24);
+	
 	for(;;) {
+		unsigned int nonce = 0;
+
 		if (chunkSize == 0) {
 			break;
 		}
@@ -102,12 +107,11 @@ int main(int argc, char *argv[]) {
 		}
 
 		int opCode = inbound[chunkSize + 1];
+
 		if (opCode == 1) {
-			unsigned short port;
 			memcpy(&port, &inbound[chunkSize + 2], 2);
 			port = ntohs(port);
 
-			char * portString = malloc(24);
 			snprintf(portString, 24, "%u", port);
 			
 			s = getaddrinfo(argv[SERVER], portString, &hints, &result);
@@ -121,13 +125,205 @@ int main(int argc, char *argv[]) {
 					break;  // Success
 				}
 			}
-			//exit(1);
+		}
+		else if (opCode == 2) {
+			close(sfd);
+			if (port != 1) {
+				s = getaddrinfo(argv[SERVER], portString, &hints, &result);
+			}
+			else {
+				s = getaddrinfo(argv[SERVER], argv[PORT], &hints, &result);
+			}
+
+				unsigned short localPort;
+				memcpy(&localPort, &inbound[chunkSize + 2], 2);
+
+				if (af == AF_INET6){
+					struct sockaddr_in6 address;
+					address.sin6_family = af;
+					address.sin6_addr = in6addr_any;
+					address.sin6_port = localPort;
+					
+
+					if (s != 0) {
+						fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+						exit(1);
+					}
+
+						for (rp = result; rp != NULL; rp = rp->ai_next) {
+						sfd = socket(rp->ai_family, rp->ai_socktype,
+								rp->ai_protocol);
+						if (sfd == -1)
+							continue;
+
+						bind(sfd, (struct sockaddr *)&address, sizeof(address));
+						if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+							break;  /* Success */
+
+						close(sfd);
+					}
+				}
+				else {
+					struct sockaddr_in address;
+					address.sin_family = af;
+					address.sin_addr.s_addr = INADDR_ANY;
+					address.sin_port = localPort;
+					
+
+					if (s != 0) {
+						fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+						exit(1);
+					}
+
+						for (rp = result; rp != NULL; rp = rp->ai_next) {
+						sfd = socket(rp->ai_family, rp->ai_socktype,
+								rp->ai_protocol);
+						if (sfd == -1)
+							continue;
+
+						bind(sfd, (struct sockaddr *)&address, sizeof(address));
+						if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+							break;  /* Success */
+
+						close(sfd);
+					}
+				}
+
+				if (rp == NULL) {   /* No address succeeded */
+					fprintf(stderr, "Could not connect\n");
+					exit(1);
+				}
+
+				freeaddrinfo(result);   /* No longer needed */
+		}
+		else if (opCode == 3) {
+			if (af == AF_INET6) {
+				struct sockaddr_in6 local;
+				socklen_t len = sizeof(local);
+				if (getsockname(sfd, (struct sockaddr *)&local, &len) == -1) {
+					fprintf(stderr, "error getting port number\n");
+					exit(1);
+				}
+
+				close(sfd);
+				if (port != 1) {
+					s = getaddrinfo(argv[SERVER], portString, &hints, &result);
+				}
+				else {
+					s = getaddrinfo(argv[SERVER], argv[PORT], &hints, &result);
+				}
+
+				for (rp = result; rp != NULL; rp = rp->ai_next) {
+						sfd = socket(rp->ai_family, rp->ai_socktype,
+								rp->ai_protocol);
+						if (sfd == -1)
+							continue;
+
+						bind(sfd, (struct sockaddr *)&local, sizeof(local));
+						break;
+				}
+			}
+			else {
+				struct sockaddr_in local;
+				socklen_t len = sizeof(local);
+				if (getsockname(sfd, (struct sockaddr *)&local, &len) == -1) {
+					fprintf(stderr, "error getting port number\n");
+					exit(1);
+				}
+
+				close(sfd);
+				if (port != 1) {
+					s = getaddrinfo(argv[SERVER], portString, &hints, &result);
+				}
+				else {
+					s = getaddrinfo(argv[SERVER], argv[PORT], &hints, &result);
+				}
+
+				for (rp = result; rp != NULL; rp = rp->ai_next) {
+						sfd = socket(rp->ai_family, rp->ai_socktype,
+								rp->ai_protocol);
+						if (sfd == -1)
+							continue;
+
+						bind(sfd, (struct sockaddr *)&local, sizeof(local));
+						break;
+				}
+			}
+
+
+			unsigned short m;
+			memcpy(&m, &inbound[chunkSize + 2], 2);
+			m = ntohs(m);
+			
+			for (unsigned short i = 0; i < m; ++i) {
+				struct sockaddr_in remote;
+				socklen_t remoteLen = sizeof(remote);
+				
+
+				if(recvfrom(sfd, NULL, 0, 0, (struct sockaddr *) &remote, &remoteLen) == -1) {
+					fprintf(stderr, "error with recvfrom\n");
+					exit(1);
+				}
+
+				nonce += ntohs(remote.sin_port);
+			}
+			nonce += 1;
+			nonce = htonl(nonce);
+			
+			if (connect(sfd, rp->ai_addr, rp->ai_addrlen) == -1) {
+				fprintf(stderr, "error connecting\n");
+				exit(1);
+			}
+
+			freeaddrinfo(result);   /* No longer needed */
+		}
+		else if (opCode == 4) {
+			if (af == AF_INET) {
+				af = AF_INET6;
+			}
+			else {
+				af = AF_INET;
+			}
+			hints.ai_family = af;
+
+			memcpy(&port, &inbound[chunkSize + 2], 2);
+			port = ntohs(port);
+
+			snprintf(portString, 24, "%u", port);
+			
+			s = getaddrinfo(argv[SERVER], portString, &hints, &result);
+
+			if (s != 0) {
+				fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+				exit(1);
+			}
+
+			close(sfd);
+			for (rp = result; rp != NULL; rp = rp->ai_next) {
+				sfd = socket(rp->ai_family, rp->ai_socktype,
+						rp->ai_protocol);
+				if (sfd == -1)
+					continue;
+
+				if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1)
+					break;  /* Success */
+
+				close(sfd);
+			}
+
+			if (rp == NULL) {   /* No address succeeded */
+				fprintf(stderr, "Could not connect\n");
+				exit(1);
+			}
+
+			freeaddrinfo(result);   /* No longer needed */
 		}
 
-		unsigned int nonce;
-		memcpy(&nonce, &inbound[inbound[0] + 4], 4);
-		nonce = ntohl(nonce) + 1;
-		nonce = htonl(nonce);
+		if (opCode != 3) {
+			memcpy(&nonce, &inbound[inbound[0] + 4], 4);
+			nonce = ntohl(nonce) + 1;
+			nonce = htonl(nonce);
+		}
 
 		unsigned char buf[BUF];
 		memcpy(&buf, &nonce, 4);
