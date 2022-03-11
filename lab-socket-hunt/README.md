@@ -21,7 +21,7 @@ remote port assignment, IPv4 and IPv6, message parsing, and more.
    - [Getting Started](#getting-started)
    - [Initial Send and Receive](#initial-send-and-receive)
    - [Collect and Print the Level 0 Treasure](#collect-and-print-the-level-0-treasure)
-   - [Print the Socket Information (Optional)](#print-the-socket-information-optional)
+   - [Print the Socket Information (Optional)](#print-the-socket-information-extra-credit)
    - [Generalize the Inputs](#generalize-the-inputs)
    - [Remove Any Extra Print Statements](#remove-any-extra-print-statements)
    - [Checkpoint 0](#checkpoint-0)
@@ -103,8 +103,11 @@ consistent of fewer than 64 bytes) and will follow this format:
        source address or port of the packet received by the server).
      - 130: The message had an incorrect length.
      - 131: The value of the nonce was incorrect.
-     - 133: After multiple tries the server was unable to bind properly to the
+     - 132: After multiple tries the server was unable to bind properly to the
        address and port that it had attempted.
+     - 134: A bad level was sent the server on the initial request, or the
+       first byte of the initial request was not zero.
+
    Note that in the case where byte 0 has value 0 or a value greater than 127,
    the entire message will only be one byte long.
  - Bytes 1 - `n` (where `n` matches the value of byte 0; only applies where `n`
@@ -501,32 +504,66 @@ declaring the following:
 	struct sockaddr_in6 ipv6addr_remote;
 ```
 
-and maintaining them along the way.  You can initialize your `struct
-sockaddr_in` with the value returned from `getaddrinfo()` using something like
+and maintaining them along the way.  You can initialize these structures with
+value populdated by `getaddrinfo()` and `getsockname()` using something like
 this:
 
 ```c
+	// populate ipv4addr_remote or ipv6addr_remote with address information
+        // found in the struct addrinfo from getaddrinfo()
 	af = rp->ai_family;
-	ipv4addr_remote = *(struct sockaddr_in *)rp->ai_addr;
+        if (af == AF_INET) {
+		ipv4addr_remote = *(struct sockaddr_in *)rp->ai_addr;
+	} else {
+		ipv6addr_remote = *(struct sockaddr_in6 *)rp->ai_addr;
+	}
 ```
-or:
+and
 ```c
+	// populate ipv4addr_local or ipv6addr_local with address information
+        // associated with sfd using getsockname()
 	af = rp->ai_family;
-	ipv6addr_remote = *(struct sockaddr_in6 *)rp->ai_addr;
+	socklen_t addrlen;
+        if (af == AF_INET) {
+		addrlen = sizeof(struct sockaddr_in);
+		getsockname(sfd, (struct sockaddr *)&ipv4addr_local, &addrlen);
+	} else {
+		addrlen = sizeof(struct sockaddr_in6);
+		getsockname(sfd, (struct sockaddr *)&ipv6addr_local, &addrlen);
+	}
 ```
 
 So you can later run something like this:
 
 ```c
-	if (connect(sfd, (struct sockaddr *)&ipv4addr, sizeof(struct sockaddr_in)) < 0) {
-		perror("connect()");
+	if (af == AF_INET) {
+		if (connect(sfd, (struct sockaddr *)&ipv4addr_remote, sizeof(struct sockaddr_in)) < 0) {
+			perror("connect()");
+		}
+	} else {
+		if (connect(sfd, (struct sockaddr *)&ipv6addr_remote, sizeof(struct sockaddr_in6)) < 0) {
+			perror("connect()");
+		}
 	}
 ```
-or:
+or
 ```c
-	if (connect(sfd, (struct sockaddr *)&ipv6addr, sizeof(struct sockaddr_in6)) < 0) {
-		perror("connect()");
+	if (af == AF_INET) {
+		ipv4addr_local.sin_family = AF_INET; // use AF_INET (IPv4)
+		ipv4addr_local.sin_port = htons(port); // specific port
+		ipv4addr_local.sin_addr.s_addr = 0; // any/all local addresses
+		if (bind(sfd, (struct sockaddr *)&ipv4addr_local, sizeof(struct sockaddr_in)) < 0) {
+			perror("bind()");
+		}
+	} else {
+		ipv6addr_local.sin6_family = AF_INET6; // IPv6 (AF_INET6)
+		ipv6addr_local.sin6_port = htons(port); // specific port
+		bzero(ipv6addr_local.sin6_addr.s6_addr, 16); // any/all local addresses
+		if (bind(sfd, (struct sockaddr *)&ipv6addr_local, sizeof(struct sockaddr_in6)) < 0) {
+			perror("bind()");
+		}
 	}
+
 ```
 
 
@@ -724,12 +761,12 @@ At this point, print out the message associated with the treasure,
 [as specified](#treasure---standard-output).
 
 
-## Print the Socket Information (Optional)
+## Print the Socket Information (Extra Credit)
 
 This section is _optional_.  It might be helpful or interesting for you to see
-where packets are being sent.
+where packets are being sent.  You will also get extra credit.
 
-Now follow the [specification](#socket-information---standard-error) to produce
+Now follow the [specification](#socket-information---standard-error-extra-credit) to produce
 the output showing the socket information before every *outgoing* communication
 (i.e., calls to `write()`, `send()`, and/or `sendto()`).  The output will be
 rather boring for level 0, but getting the output working for level 0 will
