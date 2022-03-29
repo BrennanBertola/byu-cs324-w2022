@@ -225,8 +225,8 @@ Replace `port` with the port returned by `./port-for-user.pl`.
 Now, from another terminal on the same machine, run the following:
 
 ```bash
-$ curl -x http://localhost:port/ http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics
-$ curl -x http://localhost:port/ http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ curl -x http://localhost:port/ "http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics"
+$ curl -x http://localhost:port/ "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 ```
 (Replace `port` with the port on which your proxy server is listening.)
 
@@ -248,8 +248,8 @@ request.  If it does not, now is the time to fix it.
 Now try the following:
 
 ```bash
-$ ./slow-client.py -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ ./slow-client.py -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 ```
 (Replace `port` with the port on which your proxy server is listening.)
 
@@ -312,7 +312,7 @@ Host: www-notls.imaal.byu.edu
 In the second example, port 80 is implied.
 
 In summary, for the new HTTP request that was created:
-- The *URL* in the first line, as received by the client, was changed to be a
+- The *URL* in the first line, as received from the client, was changed to be a
   *path* (plus query string).
 - The protocol is always HTTP/1.0 (this simplifies the client-server
   interaction for the purposes of this lab).
@@ -327,14 +327,14 @@ the end-of-headers sequence, `\r\n\r\n` (i.e., a blank line after the last
 header).
 
 Use `printf()` and/or `print_bytes()` to print out the HTTP request you
-created.  The re-build and re-start your proxy, and make sure it works properly
-when you run the following:
+created.  Then re-build and re-start your proxy, and make sure it works
+properly when you run the following:
 
 ```bash
-$ curl -x http://localhost:port/ http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics
-$ curl -x http://localhost:port/ http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ curl -x http://localhost:port/ "http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics"
+$ curl -x http://localhost:port/ "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu:5599/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 ```
 (Replace `port` with the port on which your proxy server is listening.)
 
@@ -375,8 +375,8 @@ The re-build and re-start your proxy, and make sure it works properly when you
 run the following:
 
 ```bash
-$ curl -x http://localhost:port/ http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ curl -x http://localhost:port/ "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 ```
 (Replace `port` with the port on which your proxy server is listening.  Also
 note that the request to `www-notls.imaal.byu.edu:5599` is not included in
@@ -490,10 +490,10 @@ $ ./proxy port
 Then in another window on the same machine, run the following:
 
 ```bash
-$ curl -o tmp1 http://www-notls.imaal.byu.edu/cgi-bin/index.html
+$ curl -o tmp1 http://www-notls.imaal.byu.edu/index.html
 $ ./slow-client.py -o tmp2 -b 1 http://www-notls.imaal.byu.edu/index.html
-$ curl -o tmp3 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -o tmp4 -b 1 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ curl -o tmp3 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -o tmp4 -b 1 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 $ curl -o tmp5 http://www-notls.imaal.byu.edu/images/imaal-80x80.png
 ```
 
@@ -510,10 +510,10 @@ it will sleep in between lines that it sends.
 Now run the following:
 
 ```bash
-$ curl -o tmp1p -x http://localhost:port/ http://www-notls.imaal.byu.edu/cgi-bin/index.html
+$ curl -o tmp1p -x http://localhost:port/ http://www-notls.imaal.byu.edu/index.html
 $ ./slow-client.py -o tmp2p -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu/index.html
-$ curl -o tmp3p -x http://localhost:port/ http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
-$ ./slow-client.py -o tmp4p -x http://localhost:port/ -b 1 http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics
+$ curl -o tmp3p -x http://localhost:port/ "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
+$ ./slow-client.py -o tmp4p -x http://localhost:port/ -b 1 "http://www-notls.imaal.byu.edu/cgi-bin/slowsend.cgi?obj=lyrics"
 $ curl -o tmp5p -x http://localhost:port/ http://www-notls.imaal.byu.edu/images/imaal-80x80.png
 ```
 
@@ -560,7 +560,6 @@ for testing:
 
  3. Start `tiny`:
     ```bash
-    $ cd tiny
     $ ./tiny port2
     ```
 
