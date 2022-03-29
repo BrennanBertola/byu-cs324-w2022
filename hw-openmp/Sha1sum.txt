@@ -1,0 +1,13 @@
+initial:
+04c0e2cf0a9e2cbc58c4d16348ef4e3be2c46efc  pic.ppm
+Part 2:
+04c0e2cf0a9e2cbc58c4d16348ef4e3be2c46efc  pic.ppm
+04c0e2cf0a9e2cbc58c4d16348ef4e3be2c46efc  pic.ppm
+
+Times(parallel, total):
+1) 29.18, 34.68
+2) 15.34, 21.41
+4) 8.78, 14.79
+8) 4.65, 10.16
+16) 3.17, 9.16
+32) 2.49, 8.48

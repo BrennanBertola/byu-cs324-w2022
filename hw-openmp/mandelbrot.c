@@ -29,12 +29,34 @@
 
   See http://www.imagemagick.org/Usage/color_mods/ for what ImageMagick
   can do. It can do a lot.
+  _____________________________________________________________________________
+  Thread times(region, total)
+1 29.18, 34.68
+2 15.34, 21.41
+4 8.78, 14.79
+8 4.65, 10.16
+16 3.17, 9.16
+32 2.49, 8.48
+  Answers:
+  1)20
+  2)it roughly halves when doubling the number of threads, this is at a declining rate though.
+  3) T(1)/T(4) = 29.18/8.78 = 3.323
+  4) the least amount of gains come from 16 with 32 being the big one.
+  5) I believe it was because at this point we were nearing the core count of the computer, meaning
+    some threads may have had to run on the same core
+  6) T(1)/T(4) = 34.68 / 14.79 = 2.345
+  7) E = Sp/p = 2.345/4 = .58
+  8) Because efficiency in a percentage with 1 being 100% so our result of .58 corresponds to 58% efficent
+  9) pT/a + T - pT = Ta, pT/a - pT = Ta - T, p(T/a - T) = Ta - T, p = (Ta - T) / (T/a - T)
+     p = (14.79 - 34.68) / ((34.68/3.323) - 34.68) = .82
+  10) Ta = pT/a + (1-p)T = 0 + (1-.82) * 34.68 = 6.24
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdint.h>
+#include <omp.h>
 
 int main(int argc, char* argv[])
 {
@@ -80,6 +102,10 @@ int main(int argc, char* argv[])
   int k; /* Iteration counter */
   int *saved = malloc(sizeof(int)*yres*xres);
 
+  double start;
+  double end;
+  start = omp_get_wtime(); 
+  #pragma omp parallel for private(j,i,k, x, y, u, v) shared(saved)
   for (j = 0; j < yres; j++) {
     y = ymax - j * dy;
     for(i = 0; i < xres; i++) {
@@ -98,6 +124,9 @@ int main(int argc, char* argv[])
       saved[xres * j + i] = k;
     }
   }
+  end = omp_get_wtime(); 
+  printf("work took %f seconds\n", end - start);
+
 
   for (j = 0; j < yres; j++) {
     for(i = 0; i < xres; i++) {
